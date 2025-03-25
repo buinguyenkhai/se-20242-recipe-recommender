@@ -1,38 +1,33 @@
-version: '3.8'
 services:
+  server:
+    build:
+      context: .
+    ports:
+      - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload & \
+            until wget -qO- http://server:8000/health >/dev/null; do sleep 1; done; \
+            wget --post-data='' http://server:8000/import_recipes/ -O-; \
+            wait"
   db:
     image: postgres
     container_name: postgres_db_container
-    ports:
-      - "5432:5432"
+    restart: always
+    user: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123
-      POSTGRES_DB: db_recipe
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-  web:
-      build: .
-      container_name: web
-      command: bash -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
-      volumes:
-        - .:/code
-      ports:
-        - "8000:8000"
-      depends_on:
-        - db
-      healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
-        interval: 10s
-        timeout: 5s
-        retries: 5
-  import:
-    build: .
-    command: python import_recipes.py
-    volumes:
-      - .:/code
-    depends_on:
-      web:
-        condition: service_healthy
+      - POSTGRES_DB=db_recipe
+      - POSTGRES_PASSWORD=123
+    expose:
+      - 5432
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 volumes:
-  pgdata:
+  db-data:

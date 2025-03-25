@@ -5,9 +5,15 @@ import json
 import models
 from database import get_db, Base, engine
 import uvicorn
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# Check server status
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 # Import from json file
 @app.post("/import_recipes/")
