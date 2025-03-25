@@ -4,9 +4,7 @@ from sqlalchemy import text
 import json
 import models
 from database import get_db, Base, engine
-
 import uvicorn
-
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()

@@ -8,7 +8,7 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /code/
 
 # Install dependencies
-RUN pip install fastapi uvicorn psycopg2 sqlalchemy
+RUN pip install fastapi uvicorn psycopg2 sqlalchemy requests
 
 COPY . /code/
 
