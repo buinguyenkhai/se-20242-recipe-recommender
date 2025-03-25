@@ -3,7 +3,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 import json
 import models
-from database import get_db
+from database import get_db, Base, engine
+
+import uvicorn
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -17,7 +21,6 @@ def import_recipes(db: Session = Depends(get_db)):
     # Kiểm tra và xóa dữ liệu nếu bảng tồn tại
     for table in tables:
         result = db.execute(text(f"SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = '{table}')")).scalar()
-        print(result)
         if result:
             db.execute(text(f"DELETE FROM {table}"))
             if table in serial_table:
@@ -135,3 +138,5 @@ def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Recipe deleted"}
 
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
