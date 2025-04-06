@@ -1,10 +1,25 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, func
 import json
 import models
 from database import get_db, Base, engine
 import uvicorn
+import re
+import unicodedata
+
+def preprocess_vietnamese(text: str) -> str:
+    text = text.lower()
+    text = re.sub(r'[^\w\s]', '', text)
+
+    stopwords = {
+       "và", "là", "của", "có", "cho", "trên", "với", "ở", "những", "các", "một", "được", "này"
+    }
+
+    tokens = text.split()
+    filtered = [t for t in tokens if t not in stopwords]
+    return ' '.join(filtered)
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -141,6 +156,47 @@ def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
     db.delete(recipe)
     db.commit()
     return {"message": "Recipe deleted"}
+
+#list of queries that work: s
+@app.get("/search/")
+def search_recipes(
+    query: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    processed_query = preprocess_vietnamese(query)
+    ts_query = func.websearch_to_tsquery('simple', processed_query)
+    #ts_query = func.plainto_tsquery('simple', processed_query)
+
+    search = (
+        db.query(models.Recipe)
+        .outerjoin(models.Recipe.ingredients)
+        .outerjoin(models.Ingredient)
+        .outerjoin(models.Recipe.tags)
+        .outerjoin(models.Tag)
+        .filter(
+            func.to_tsvector('simple', func.coalesce(models.Recipe.title, '')).op('@@')(ts_query)
+            |
+            func.to_tsvector('simple', func.coalesce(models.Ingredient.name, '')).op('@@')(ts_query)
+            |
+            func.to_tsvector('simple', func.coalesce(models.Tag.tag_name, '')).op('@@')(ts_query)
+        )
+        .distinct()
+    )
+
+    recipes = search.all()
+
+    return [
+        {
+            "recipe_id": r.recipe_id,
+            "title": r.title,
+            "image_url": r.image_url,
+            "url": r.url,
+        }
+        for r in recipes
+    ]
+
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
