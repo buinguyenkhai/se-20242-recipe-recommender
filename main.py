@@ -157,7 +157,6 @@ def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Recipe deleted"}
 
-#list of queries that work: s
 @app.get("/search/")
 def search_recipes(
     query: str = Query(...),
