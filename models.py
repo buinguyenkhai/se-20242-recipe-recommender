@@ -9,10 +9,21 @@ class Recipe(Base):
     title = Column(String, nullable=False)
     image_url = Column(String)
     url = Column(String)
+    source_id = Column(Integer, ForeignKey("sources.source_id"))  # Liên kết với Source
 
     ingredients = relationship("RecipeIngredient", back_populates="recipe")
     steps = relationship("Step", back_populates="recipe")
     tags = relationship("RecipeTag", back_populates="recipe")
+    source = relationship("Source", back_populates="recipes")  # Quan hệ với Source
+
+
+class Source(Base):
+    __tablename__ = "sources"
+
+    source_id = Column(Integer, primary_key=True, index=True)
+    source_name = Column(String, unique=True, nullable=False)
+
+    recipes = relationship("Recipe", back_populates="source")  # Liên kết với Recipe
 
 
 class Ingredient(Base):
@@ -40,8 +51,7 @@ class Step(Base):
 
     recipe_id = Column(Integer, ForeignKey("recipes.recipe_id"), primary_key=True)
     step_number = Column(Integer, primary_key=True)
-    step_title = Column(String, nullable=False)
-    step_detail = Column(String, nullable=False)
+    step_detail = Column(String, nullable=False)  # Chỉ giữ lại step_detail
 
     recipe = relationship("Recipe", back_populates="steps")
 
