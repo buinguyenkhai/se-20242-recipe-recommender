@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, func
 import json
 import models
 from database import get_db, Base, engine
@@ -9,6 +9,10 @@ import uvicorn
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+with engine.connect() as conn:
+    conn.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent;"))
+    conn.commit()
 
 # Check server status
 @app.get("/health")
@@ -180,22 +184,27 @@ def get_recipe_tags(recipe_id: int, db: Session = Depends(get_db)):
 
 @app.get("/recipes/by_ingredient/{ingredient_name}/")
 def get_recipes_by_ingredient(ingredient_name: str, db: Session = Depends(get_db)):
-    # Tìm nguyên liệu theo tên
-    ingredient = db.query(models.Ingredient).filter(models.Ingredient.name.ilike(f"%{ingredient_name}%")).first()
-    if not ingredient:
-        raise HTTPException(status_code=404, detail="Ingredient not found")
-
-    # Tìm các recipe_id có chứa nguyên liệu này
-    recipe_ingredients = db.query(models.RecipeIngredient).filter(
-        models.RecipeIngredient.ingredient_id == ingredient.ingredient_id
+    # Tìm tất cả nguyên liệu có tên chứa từ khóa
+    ingredients = db.query(models.Ingredient).filter(
+        func.unaccent(func.lower(models.Ingredient.name)).ilike(f"%{ingredient_name.lower()}%")
     ).all()
 
-    if not recipe_ingredients:
-        raise HTTPException(status_code=404, detail="No recipes found for this ingredient")
+    if not ingredients:
+        raise HTTPException(status_code=404, detail="No matching ingredients found")
 
-    # Lấy danh sách các công thức từ recipe_id
-    recipe_ids = [ri.recipe_id for ri in recipe_ingredients]
-    recipes = db.query(models.Recipe).filter(models.Recipe.recipe_id.in_(recipe_ids)).all()
+    ingredient_ids = [i.ingredient_id for i in ingredients]
+
+    # Tìm tất cả các công thức có chứa các nguyên liệu trên
+    recipe_ids = db.query(models.RecipeIngredient.recipe_id).filter(
+        models.RecipeIngredient.ingredient_id.in_(ingredient_ids)
+    ).distinct()
+
+    recipes = db.query(models.Recipe).filter(
+        models.Recipe.recipe_id.in_(recipe_ids)
+    ).all()
+
+    if not recipes:
+        raise HTTPException(status_code=404, detail="No recipes found for these ingredients")
 
     return recipes
 
