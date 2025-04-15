@@ -13,6 +13,12 @@ const recipes = [
     ingredients: ["Chicken", "Onion", "Garlic", "Ginger", "Curry powder"],
     instructions: "Cook onions, garlic, and ginger. Add chicken and spices, then coconut milk.",
   },
+  {
+    name: "Caprese Salad",
+    description: "Basic salad",
+    ingredients: ["Tomato", "Mozzarella", "Basil"],
+    instructions: "Slice tomatoes, mozzarella and fresh basils onto a platter, drizzle with salt and olive oil.",
+  },
 ];
 
 const RecipeDetails = () => {
@@ -21,7 +27,7 @@ const RecipeDetails = () => {
   const recipe = recipes.find((r) => r.name.toLowerCase() === formattedName.toLowerCase());
 
   if (!recipe) {
-    return <h1 className="text-white text-2xl text-center mt-10">Recipe not found</h1>;
+    return <h1 className="text-black text-2xl text-center mt-10">Recipe not found</h1>;
   }
 
   return (
