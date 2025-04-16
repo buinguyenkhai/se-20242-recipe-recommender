@@ -36,7 +36,7 @@ def import_recipes(db: Session = Depends(get_db)):
     
     db.commit()
 
-    with open("vaobep.json", "r", encoding="utf-8") as f:
+    with open("Data/vaobep.json", "r", encoding="utf-8") as f:
         recipes_data = json.load(f)
 
     for recipe in recipes_data:
