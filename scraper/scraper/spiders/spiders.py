@@ -130,8 +130,8 @@ class SoTayNauAnSpider(FrameworkSpider):
                 "description": " ".join(response.css("#content > p")[1].css(" ::text").getall()).replace("  ", " "),
                 "image": response.css("div.thumb > img::attr(src)").get(),
                 "ingredients": seperate_ingredient(clean_text(response.css("ul.ingredients > li").getall())),
-                "step-detail": [text for text in clean_text(response.css("div.instructions > p, div.instructions > ul > li").getall())
-                                if not re.match(r'^\w*$', text)],
+                "step-detail": "\n".join([text for text in clean_text(response.css("div.instructions > p, div.instructions > ul > li").getall())
+                                if not re.match(r'^\w*$', text)]),
                 "tags": response.css("#breadcrumbs > span > span > a::text").getall()[1:],
                 "num_of_people": None,
                 "date": response.css("script[type='application/ld+json']").re(time_reg)[0],
@@ -168,7 +168,7 @@ class MonNgonMoiNgaySpider(FrameworkSpider):
                 "description": " ".join(response.css("[class~='section-tabs'] + div ::text").re("\w.*\w")),
                 "image": response.css("div.main > div > div > div > img::attr(src)").get(),
                 "ingredients": seperate_ingredient(response.css("#tab-gram ::text").re("\S.*\S")),
-                "step-detail": response.css("#section-soche ::text, #section-thuchien ::text, #section-howtouse ::text").re("\w.*\w"),
+                "step-detail": "\n".join(response.css("#section-soche ::text, #section-thuchien ::text, #section-howtouse ::text").re("\w.*\w")),
                 "tags": response.css("ul[class~='tags']")[-1].css("::text").getall(),
                 "num_of_people": response.css("div.flex.justify-around > div > strong::text")[0].get(),
                 "date": response.css("script[type='application/ld+json']").re(time_reg)[0],
