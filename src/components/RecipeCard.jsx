@@ -1,23 +1,25 @@
-import React from "react";
+// src/components/RecipeCard.jsx
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 const RecipeCard = ({ recipe }) => {
   return (
-    <div className="rounded-xl shadow-lg bg-gradient-to-br from-orange-100 via-yellow-100 to-orange-200 p-6 hover:scale-105 transform transition duration-300">
-      <h3 className="text-2xl font-semibold text-orange-800">{recipe.name}</h3>
-      <p className="mt-2 text-gray-700 italic">{recipe.description}</p>
-      {recipe.tags && (
-        <div className="mt-3">
-          <span className="text-sm font-medium text-gray-600">Tags:</span>
-          <ul className="flex flex-wrap gap-2 mt-1">
-            {recipe.tags.map((tag, i) => (
-              <li key={i} className="bg-orange-300 text-white text-xs px-2 py-1 rounded-full">
+    <Link to={`/recipe/${recipe.id}`}>
+      <div className="rounded overflow-hidden shadow-lg hover:shadow-xl transition">
+        <img src={recipe.image} alt={recipe.title} className="w-full h-48 object-cover" />
+        <div className="p-4">
+          <h3 className="text-lg font-bold mb-1">{recipe.title}</h3>
+          <p className="text-sm text-gray-500 mb-2">{recipe.time} - {recipe.difficulty}</p>
+          <div className="flex flex-wrap gap-1">
+            {recipe.tags.map(tag => (
+              <span key={tag} className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
                 {tag}
-              </li>
+              </span>
             ))}
-          </ul>
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    </Link>
   );
 };
 
